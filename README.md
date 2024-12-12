@@ -48,7 +48,31 @@ Node Storage è un'applicazione per la gestione di file con autenticazione utent
 ### Autenticazione
 
 - `POST /auth/register`: Registra un nuovo utente.
+    ```json
+    { 
+        "name": "John Doe",
+        "email": "example@email.com",
+        "password": "your_password", 
+        "confirmPassword": "your_password",
+    }
+    ```
 - `POST /auth/login`: Effettua il login di un utente.
+```json
+    { 
+        "email": "example@email.com",
+        "password": "your_password", 
+    }
+    ```
+- `GET /auth/user`: Restituisce i dati dell'utente autenticato.
+```json
+    {
+        "id": 1,
+        "email": "email@example.com",
+        "name": "John Doe",
+        "createdAt": "2024-12-11T11:37:26.555Z",
+        "updatedAt": "2024-12-11T11:37:26.555Z"
+    }
+    ```
 
 ### File
 
