@@ -34,6 +34,7 @@ export const listFiles = async (req: Request & { userId?: string }, res: Respons
 
         res.status(200).json(files)
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: 'Error fetching files' })
     }
 }

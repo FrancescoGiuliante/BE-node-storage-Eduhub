@@ -1,6 +1,6 @@
 # Node Storage
 
-Node Storage è un'applicazione per la gestione di file con autenticazione utente. Utilizza Express.js per il backend e Prisma come ORM per interagire con il database.
+Node Storage è un'applicazione per la gestione di file con autenticazione utente. Utilizza Express.js per il backend e Prisma come ORM per interagire con il database. Permette inoltre di inoltrare le richieste, previa autenticazione, ad un backend service esterno tramite un proxy middleware.
 
 ## Requisiti
 
@@ -48,6 +48,7 @@ Node Storage è un'applicazione per la gestione di file con autenticazione utent
 ### Autenticazione
 
 - `POST /auth/register`: Registra un nuovo utente.
+
     ```json
     { 
         "name": "John Doe",
@@ -56,15 +57,21 @@ Node Storage è un'applicazione per la gestione di file con autenticazione utent
         "confirmPassword": "your_password",
     }
     ```
+
+
 - `POST /auth/login`: Effettua il login di un utente.
-```json
+
+	```json
     { 
         "email": "example@email.com",
         "password": "your_password", 
     }
     ```
+
+
 - `GET /auth/user`: Restituisce i dati dell'utente autenticato.
-```json
+
+	```json
     {
         "id": 1,
         "email": "email@example.com",
@@ -76,14 +83,67 @@ Node Storage è un'applicazione per la gestione di file con autenticazione utent
 
 ### File
 
-- `POST /api/upload`: Carica un file (richiede autenticazione).
-- `GET /api/files`: Elenca i file dell'utente autenticato.
-- `GET /api/files/:userId/:filename`: Scarica un file specifico.
-- `DELETE /api/delete/:filename`: Elimina un file (richiede autenticazione).
+- `POST /files/upload`: Carica un file (richiede autenticazione).
+
+    ```json
+    { 
+        "file": "file_da_caricare"
+    }
+    ```
+
+
+- `GET /files`: Elenca i file dell'utente autenticato (richiede autenticazione).
+
+    ```json
+    [
+        {
+            "id": 1,
+            "userId": 1,
+            "filename": "file1.txt",
+            "createdAt": "2024-12-11T11:37:26.555Z",
+            "updatedAt": "2024-12-11T11:37:26.555Z"
+        },
+        {
+            "id": 2,
+            "userId": 1,
+            "filename": "file2.txt",
+            "createdAt": "2024-12-11T11:37:26.555Z",
+            "updatedAt": "2024-12-11T11:37:26.555Z"
+        }
+    ]
+    ```
+
+    
+- `GET /files/:userId/:filename`: Restituisce un file specifico.
+
+- `DELETE /files/delete/:filename`: Elimina un file (richiede autenticazione).
 
 ## Middleware
 
 - `authenticateToken`: Middleware per autenticare le richieste tramite token JWT.
+
+## Proxy Middleware
+
+L'applicazione include un proxy middleware che gestisce le richieste verso un backend service esterno. 
+Tutte le richieste dirette a `/api/*` vengono inoltrate al backend service configurato.
+
+### Configurazione
+- Il proxy è configurato per inoltrare le richieste a `BACKEND_SERVICE_URL` (default: http://localhost:8080)
+- Rimuove il prefisso `/api` dalle richieste inoltrate
+- Richiede autenticazione JWT per tutte le richieste
+
+### Headers propagati
+- `X-User`: Informazioni dell'utente autenticato in formato JSON stringified
+
+### Esempio di utilizzo
+```http
+GET /api/users
+```
+Viene inoltrato come:
+```http
+GET /users
+X-User: {"id": 1, "email": "user@example.com", "name": "John Doe", "createdAt": "2024-12-11T11:37:26.555Z", "updatedAt": "2024-12-11T11:37:26.555Z"}
+```
 
 ## Struttura del Progetto
 
