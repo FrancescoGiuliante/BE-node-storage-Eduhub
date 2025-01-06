@@ -1,11 +1,13 @@
-import { Request, Response } from 'express'
-import prisma from '../config/db'
+import { Request, Response, NextFunction } from 'express';
+import prisma from '../config/db';
+import path from 'path';
 
-export const uploadFile = async (req: Request & { userId?: string, file?: Express.Multer.File }, res: Response) => {
+export const uploadFile = async (req: Request & { userId?: number, file?: Express.Multer.File }, res: Response, next: NextFunction): Promise<void> => {
     try {
-        if (!req.file || !req.userId) {
-            res.status(400).json({ error: 'No file uploaded or user not authenticated' })
-            return
+
+        if (!req.file || !req.body.userId || !req.body.classId) {
+            res.status(400).json({ error: 'No file uploaded, user not authenticated, or classId not provided' });
+            return; 
         }
 
         const file = await prisma.file.create({
@@ -14,58 +16,69 @@ export const uploadFile = async (req: Request & { userId?: string, file?: Expres
                 path: req.file.path,
                 mimetype: req.file.mimetype,
                 size: req.file.size,
-                userId: parseInt(req.userId)
+                userId: parseInt(req.body.userId),
+                courseClassID: parseInt(req.body.classId),
             }
-        })
+        });
 
-        res.status(201).json(file)
+        res.status(201).json(file);
     } catch (error) {
-        res.status(500).json({ error: 'Error uploading file' })
+        console.error('Error uploading file:', error);
+        next(error);
     }
-}
+};
 
-export const listFiles = async (req: Request & { userId?: string }, res: Response) => {
+export const listFiles = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const files = await prisma.file.findMany({
-            where: {
-                userId: parseInt(req.userId!)
+            include: {
+                user: true
             }
-        })
+        });
 
-        res.status(200).json(files)
+        if (!files || files.length === 0) {
+            res.status(404).json({ error: 'No files found' });
+            return;
+        }
+
+        res.status(200).json(files);
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ error: 'Error fetching files' })
+        console.error('Error fetching files:', error);
+        next(error);
     }
-}
+};
 
-export const deleteFile = async (req: Request & { userId?: string }, res: Response) => {
+export const deleteFile = async (req: Request & { userId?: number }, res: Response, next: NextFunction): Promise<void> => {
     try {
+        const { filename } = req.params;
+        const userId = req.userId;
+
         const file = await prisma.file.findFirst({
             where: {
-                filename: req.params.filename,
-                userId: parseInt(req.userId!)
+                filename: filename,
+                userId: userId
             }
-        })
+        });
 
         if (!file) {
-            res.status(404).json({ error: 'File not found' })
-            return
+            res.status(404).json({ error: 'File not found' });
+            return;
         }
 
         await prisma.file.delete({
             where: {
                 id: file.id
             }
-        })
+        });
 
-        res.status(200).json({ message: 'File deleted successfully' })
+        res.status(200).json({ message: 'File deleted successfully' });
     } catch (error) {
-        res.status(500).json({ error: 'Error deleting file' })
+        console.error('Error deleting file:', error);
+        next(error);
     }
-}
+};
 
-export const getFile = async (req: Request, res: Response) => {
+export const getFile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const { userId, filename } = req.params;
 
@@ -81,8 +94,34 @@ export const getFile = async (req: Request, res: Response) => {
             return;
         }
 
-        res.sendFile(file.path, { root: './' });
+        res.sendFile(path.resolve(file.path));
     } catch (error) {
-        res.status(500).json({ error: 'Error retrieving file' });
+        console.error('Error retrieving file:', error);
+        next(error);
+    }
+};
+
+export const listFilesByClass = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const { classId } = req.params;
+
+        const files = await prisma.file.findMany({
+            where: {
+                courseClassID: parseInt(classId)
+            },
+            include: {
+                user: true
+            }
+        });
+
+        if (!files || files.length === 0) {
+            res.status(404).json({ error: 'No files found' });
+            return;
+        }
+
+        res.status(200).json(files);
+    } catch (error) {
+        console.error('Error fetching files:', error);
+        next(error);
     }
 };
