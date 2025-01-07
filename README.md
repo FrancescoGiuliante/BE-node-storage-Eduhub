@@ -12,8 +12,8 @@ Node Storage è un'applicazione per la gestione di file con autenticazione utent
 
 1. Clona il repository:
     ```sh
-    git clone https://github.com/tuo-username/node-storage.git
-    cd node-storage
+    git clone https://github.com/FrancescoGiuliante/BE-node-storage-Eduhub.git
+    cd node-storage-Eduhub
     ```
 
 2. Installa le dipendenze:
@@ -38,7 +38,7 @@ Node Storage è un'applicazione per la gestione di file con autenticazione utent
 
 1. Avvia il server:
     ```sh
-    npm start
+    npm run dev
     ```
 
 2. L'applicazione sarà disponibile su `http://localhost:3000`.
